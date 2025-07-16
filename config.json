@@ -1,0 +1,13 @@
+{
+    "relay": {
+        "ip": "127.0.0.1",
+        "ae_title": "RELAY",
+        "port": 11112
+    },
+    "forward": {
+        "ip": "127.0.0.1",
+        "ae_title": "MVLS_AMO",
+        "port": 104
+    },
+    "debug": true
+}
