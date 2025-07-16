@@ -29,6 +29,7 @@ try:
     relay = config.get('relay')
     forward = config.get('forward')
 except:
+    # Load defaults in case any thing goes wrong, and save it.
     logging.error('The <config.json> file is damaged. Defaults loaded.')
     with open('config.json', 'w') as f:
         json.dump(default, f)
@@ -45,7 +46,6 @@ if config['debug']:
     debug_logger()
     l = logging.getLogger('pynetdicom')
     logging.basicConfig(filename='dicom.log', encoding='utf-8', level=logging.DEBUG)
-#  >--------------------------------------------------------------------------------<
 
 # Handler for c_echo request
 def handle_echo(event, logger):
@@ -57,7 +57,6 @@ def handle_echo(event, logger):
 
 # Handler to forward received DICOM datasets
 def handle_store(event, logger):
-    global c
     ds = event.dataset
     ds.file_meta = event.file_meta
 
@@ -72,7 +71,7 @@ def handle_store(event, logger):
         build_context(EnhancedCTImageStorage),
         build_context(MRImageStorage),
         build_context(EnhancedMRImageStorage),
-        ]
+        ] # You can add other relevant tags here.
 
     assoc = ae.associate(FORWARD_HOST, FORWARD_PORT, ae_title=FORWARD_AET)
     if assoc.is_established:
