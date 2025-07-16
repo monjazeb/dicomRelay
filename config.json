@@ -6,8 +6,8 @@
     },
     "forward": {
         "ip": "127.0.0.1",
-        "ae_title": "MVLS_AMO",
-        "port": 104
+        "ae_title": "RECEIVER",
+        "port": 11113
     },
     "debug": true
 }
