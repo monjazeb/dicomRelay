@@ -9,7 +9,7 @@ from pynetdicom.sop_class import Verification
 from pynetdicom.presentation import build_context
 
 # Load Configuration from config.json file
-default = {
+config = {
     "relay": {
         "ip": "127.0.0.1",
         "ae_title": "RELAY",
@@ -20,7 +20,8 @@ default = {
         "ae_title": "FORWARD",
         "port": 11113
     },
-    "debug": True
+    "debug": True,
+    "anonymize": True
 }
 
 try:
@@ -28,24 +29,23 @@ try:
         config = json.load(f)
     relay = config.get('relay')
     forward = config.get('forward')
+    RELAY_AET = relay.get('ae_title')# This relay's AE Title
+    LISTEN_PORT = relay.get('port')  # Port to listen for incoming DICOM images 
+    FORWARD_HOST = forward.get('ip')  # PACS or DICOM receiver address
+    FORWARD_AET = forward.get('ae_title')  # PACS AE Title
+    FORWARD_PORT = forward.get('port')  # PACS or DICOM receiver port
 except:
-    # Load defaults in case any thing goes wrong, and save it.
-    logging.error('The <config.json> file is damaged. Defaults loaded.')
+    logging.error('The <config.json> file is damaged. Defaults loaded. Relounch.')
     with open('config.json', 'w') as f:
-        json.dump(default, f)
-    relay = default['relay']
-    forward = default['forward']
+        json.dump(config, f)
+    exit(1)
 
-RELAY_AET = relay.get('ae_title', default['relay']['ae_title'])  # This relay's AE Title
-LISTEN_PORT = relay.get('port', default['relay']['port'])  # Port to listen for incoming DICOM images 
-FORWARD_HOST = forward.get('ip', default['relay']['ip'])  # PACS or DICOM receiver address
-FORWARD_AET = forward.get('ae_title', default['relay']['ae_title'])  # PACS AE Title
-FORWARD_PORT = forward.get('port', default['relay']['port'])  # PACS or DICOM receiver port
 # Setup logging to use the StreamHandler at the debug level
 if config['debug']:
     debug_logger()
     l = logging.getLogger('pynetdicom')
     logging.basicConfig(filename='dicom.log', encoding='utf-8', level=logging.DEBUG)
+#  >--------------------------------------------------------------------------------<
 
 # Handler for c_echo request
 def handle_echo(event, logger):
@@ -57,13 +57,15 @@ def handle_echo(event, logger):
 
 # Handler to forward received DICOM datasets
 def handle_store(event, logger):
+    global c
     ds = event.dataset
     ds.file_meta = event.file_meta
 
     requestor = event.assoc.requestor
     timestamp = event.timestamp.strftime("%Y-%m-%d %H:%M:%S")
     logger.error(f"{requestor.ae_title} ({requestor.address}, {requestor.port}) at {timestamp}")
-
+    if config['anonymize']:
+        ds.remove_private_tags()
     # Set up AE for forwarding
     ae = AE(ae_title=RELAY_AET)
     ae.requested_contexts = [
@@ -71,7 +73,7 @@ def handle_store(event, logger):
         build_context(EnhancedCTImageStorage),
         build_context(MRImageStorage),
         build_context(EnhancedMRImageStorage),
-        ] # You can add other relevant tags here.
+        ]
 
     assoc = ae.associate(FORWARD_HOST, FORWARD_PORT, ae_title=FORWARD_AET)
     if assoc.is_established:
