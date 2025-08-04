@@ -1,13 +1,6 @@
 {
-    "relay": {
-        "ip": "127.0.0.1",
-        "ae_title": "RELAY",
-        "port": 11112
-    },
-    "forward": {
-        "ip": "127.0.0.1",
-        "ae_title": "RECEIVER",
-        "port": 11113
-    },
-    "debug": true
+  "relay": { "ip": "127.0.0.1", "ae_title": "RELAY", "port": 11114 },
+  "forward": { "ip": "127.0.0.1", "ae_title": "FORWARD", "port": 11113 },
+  "debug": true,
+  "anonymize": true
 }
